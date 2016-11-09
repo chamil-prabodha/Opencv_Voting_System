@@ -5,49 +5,90 @@ from PIL import Image
 from PIL import ImageTk
 import tkFileDialog
 import os
+import ImageTransform
+import ImageSegmentaion
 
-
-img = cv2.imread('001B.jpg')
+ballot_paper = cv2.imread('001A.jpg')
 # P1 = cv2.imread('img/P1.jpg')
-img_main = img.copy()
+img_main = ballot_paper.copy()
 
-#-------------------<Ballot paper>----------------------------
+transform = ImageTransform.ImageTransform()
+segmentation = ImageSegmentaion.ImageSegmentation()
 
-gray = cv2.cvtColor(img_main, cv2.COLOR_BGR2GRAY)
-gray = cv2.GaussianBlur(gray, (5, 5), 0)
-# gray = cv2.fastNlMeansDenoising(gray,None,18,7,21)
-# thresh, gray = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
-cannyout = cv2.Canny(gray, 50, 100, 5)
-
-im2, contours, hierarchy = cv2.findContours(cannyout.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-# Select the contours with convexity and four points
-contours = [contour for contour in contours if not cv2.isContourConvex(contour) and len(cv2.approxPolyDP(contour,0.02*cv2.arcLength(contour,True),True))==4]
-contours = sorted(contours,key=lambda x:(cv2.contourArea(x)),reverse=True)
-
-# cv2.drawContours(img_main,contours[:1],-1,(0,0,255),3)
-
-# to straighten the image (doesn't work)
-rect = cv2.minAreaRect(contours[0])
-box = cv2.boxPoints(rect)
-box = np.int0(box)
-x,y,w,h = cv2.boundingRect(box)
-
-# Select the largest rectangle containing signs and voting boxes
-img = img_main[y:y+h,x:x+w]
-# cv2.rectangle(img_main,(x,y),(x+w,y+h),(0,0,255),3)
-img_main = img
+#-------------------<Party Voting>--------------------------------------------------------------------------
+img_main = segmentation.segmentPartyVoting(img_main)
+img = img_main
 
 # Display the cropped image
-img_main = cv2.resize(img_main,(0,0),fx=0.25,fy=0.25)
-cv2.imshow('Main',img_main)
+img_main = cv2.resize(img_main, (0, 0), fx=0.25, fy=0.25)
+cv2.imshow('Main', img_main)
 
 # Display the edged image
-cannyout = cv2.resize(cannyout,(0,0),fx=0.25,fy=0.25)
-cv2.imshow('Canny',cannyout)
+# cannyout = cv2.resize(cannyout,(0,0),fx=0.25,fy=0.25)
+# cv2.imshow('Canny',cannyout)
 
-# ------------------</Ballot paper>----------------------------
+# ------------------</Party Voting>-------------------------------------------------------------------------
+# -------------------<Preference Voting>--------------------------------------------------------------------
+img_main = ballot_paper.copy()
+pref_im = segmentation.segmentPreferenceVoting(img_main)
 
+pref_gray = cv2.cvtColor(pref_im, cv2.COLOR_BGR2GRAY)
+
+pref_gray_erode = cv2.erode(pref_gray.copy(), np.ones((3, 3), np.uint8), iterations=1)
+
+pref_gray_erode = cv2.blur(pref_gray_erode, (3, 3), 0)
+
+# pref_gray_erode = pref_gray
+pref_cannyout = cv2.Canny(pref_gray_erode, 100, 200, 5)
+
+pref_im2, pref_contours, pref_hierarchy = cv2.findContours(pref_cannyout.copy(), cv2.RETR_TREE,
+                                                           cv2.CHAIN_APPROX_SIMPLE)
+
+# Select the contours with convexity and four points
+pref_contours = [contour for contour in pref_contours if
+                 cv2.contourArea(contour) > 20 and cv2.contourArea(contour) < 10000 and len(
+                     cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)) == 4]
+pref_contours = sorted(pref_contours, key=lambda x: (cv2.contourArea(x)), reverse=True)
+print(len(pref_contours))
+# cv2.drawContours(pref_im, pref_contours, -1, (0, 0, 255), 3)
+
+rect = []
+centroids = []
+for cnt in pref_contours:
+    x, y, w, h = cv2.boundingRect(cnt)
+    cv2.rectangle(pref_im,(x,y),(x+w,y+h),(0,255,0),3)
+    rect.append([x,y,w,h])
+    cx = x+w/2
+    cy = y+h/2
+    centroids.append([cx,cy])
+
+temp = []
+for cx,cy in centroids:
+    if [cx,cy] not in temp:
+        temp.append([cx,cy])
+
+centroids = temp
+centroids = sorted(centroids,key=lambda x:(x[1],x[0]))
+
+# print(len(centroids))
+# print(centroids)
+
+height, width= pref_im.shape[:2]
+blocks = [None]*40
+for i in range(0,4):
+    for j in range(0,10):
+        for cx, cy in centroids:
+            index = i*10+j
+            if cx < (j+1)*width/10 and cx >j*width/10 and cy < (i+1)*height/4 and cy > i*height/4:
+                blocks[i*10+j] = [cx,cy]
+    # print(blocks[i])
+# print(blocks)
+
+voted = [i+1 for i,val in enumerate(blocks) if val is None]
+print(voted)
+cv2.imshow('im',pref_im)
+
+# -------------------</Preference Voting>--------------------------------------------------------------------
 
 # Select image for feature matching
 def select_image():
@@ -317,7 +358,7 @@ def select_folder():
     t_im = None
     t_vote = None
     voted = False
-
+    i=0
     for x,y,w,h in rect:
         cx = x+w/2
         cy = y+h/2
@@ -337,7 +378,7 @@ def select_folder():
             hull = cv2.convexHull(cnt, returnPoints=False)
             defects = cv2.convexityDefects(cnt, hull)
 
-            if defects is not None:
+            if defects is not None and len(defects)>5:
                 for i in range(defects.shape[0]):
                     s, e, f, d = defects[i, 0]
                     start = tuple(cnt[s][0])
@@ -356,7 +397,9 @@ def select_folder():
         # print(count)
 
         # cv2.drawContours(im,cnts,-1,(0,0,255),3)
-        cv2.imshow('box'+str(count),im)
+
+        # cv2.imshow('box'+str(i),im)
+        i+=1
 
     if count == 1:
         print('Voted:' + str(count))
