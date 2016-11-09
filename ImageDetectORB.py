@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from Tkinter import *
+import Tkconstants
 from PIL import Image
 from PIL import ImageTk
 import tkFileDialog
@@ -48,6 +49,7 @@ pref_im2, pref_contours, pref_hierarchy = cv2.findContours(pref_cannyout.copy(),
 pref_contours = [contour for contour in pref_contours if
                  cv2.contourArea(contour) > 20 and cv2.contourArea(contour) < 10000 and len(
                      cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)) == 4]
+
 pref_contours = sorted(pref_contours, key=lambda x: (cv2.contourArea(x)), reverse=True)
 print(len(pref_contours))
 # cv2.drawContours(pref_im, pref_contours, -1, (0, 0, 255), 3)
@@ -93,7 +95,7 @@ cv2.imshow('im',pref_im)
 # Select image for feature matching
 def select_image():
     # Declare global variables
-    global panelA,panelB,img,im_canny
+    global panelA,panelB,img,im_canny,topframe
 
     # Open the file
     path = tkFileDialog.askopenfilename()
@@ -213,13 +215,16 @@ def select_image():
         # Update panels
         if panelA is None or panelB is None:
 
-            panelA = Label(image=template_ori)
+            panelA = Label(topframe,image=template_ori)
             panelA.image = template_ori
-            panelA.pack(side='left',padx=10,pady=10)
+            panelA.pack(side='left',padx=10, pady=10)
+            panelA.grid(row=0, column=0)
 
-            panelB = Label(image=template_edges)
+            panelB = Label(topframe,image=template_edges)
             panelB.image = template_edges
-            panelB.pack(side='right',padx=10,pady=10)
+            panelB.pack(side='left',padx=10, pady=10)
+            panelB.grid(row=0, column=1)
+
 
         else:
             panelA.configure(image = template_ori)
@@ -414,13 +419,16 @@ def select_folder():
 
         if panelA is None or panelB is None:
 
-            panelA = Label(image=t_im)
+            panelA = Label(frame,image=t_im)
             panelA.image = t_im
-            panelA.pack(side='left', padx=10, pady=10)
+            panelA.pack(padx=10, pady=10)
+            panelA.grid(row=0,column=0)
 
-            panelB = Label(image=t_vote)
+            panelB = Label(frame,image=t_vote)
             panelB.image = t_vote
-            panelB.pack(side='right', padx=10, pady=10)
+            panelB.pack(padx=10, pady=10)
+            panelB.grid(row = 0,column=1)
+
 
         else:
             panelA.configure(image=t_im)
@@ -440,15 +448,25 @@ def select_folder():
 # -----------------------------------------------------------------------------------------------------------------
 
 root = Tk()
+
+topframe = Frame(root,relief='ridge',width=100,height=100)
+topframe.pack()
+
+frame = Frame(root)
+frame.pack(side='bottom')
+# root.minsize(width=400,height=500)
 panelA = None
 panelB = None
 
-btn1 = Button(root,text='Select Image',command = select_image)
-btn1.pack(side='bottom',fill='both',expand='yes',padx='10',pady='10')
-btn2 = Button(root,text='Select Folder',command = select_folder)
-btn2.pack(side='bottom',fill='both',expand='yes',padx='10',pady='10')
-# w = Scale(root,from_=0,to_=100,orient=HORIZONTAL)
-# w.pack(side='top')
+l1 = Label(frame,text='Party Symbols File',relief='ridge',width=20).grid(row=1,column=0)
+btn1 = Button(frame,text='Open File',command = select_image,width=10)
+# btn1.pack(side='right',fill=Tkconstants.NONE,expand='yes',padx='10',pady='10',)
+btn1.grid(row=1,column=1)
+
+l2 = Label(frame,text='Party Symbols Folder',relief='ridge',width=20).grid(row=2,column=0)
+btn2 = Button(frame,text='Open Folder',command = select_folder,width=10)
+# btn2.pack(side='right',fill=Tkconstants.NONE,expand='yes',padx='10',pady='10')
+btn2.grid(row=2,column=1)
 
 root.mainloop()
 

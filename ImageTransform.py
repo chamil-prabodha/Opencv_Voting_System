@@ -9,7 +9,7 @@ class ImageTransform(object):
         # print(approximation)
 
         # approximation = sort_corners(approximation)
-        print(approximation)
+        # print(approximation)
         h1 = np.sqrt(np.power((approximation[0][0][0] - approximation[3][0][0]), 2) + np.power(
             (approximation[0][0][1] - approximation[3][0][1]), 2))
         h2 = np.sqrt(np.power((approximation[1][0][0] - approximation[2][0][0]), 2) + np.power(
@@ -47,7 +47,7 @@ class ImageTransform(object):
                     a = np.cos(theta)
                     b = np.sin(theta)
                     good_lines.append(theta)
-                    print(theta)
+                    # print(theta)
                     x0 = a * rho
                     y0 = b * rho
                     x1 = int(x0 + 10000 * (-b))
