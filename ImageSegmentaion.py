@@ -34,8 +34,12 @@ class ImageSegmentation(object):
     def segmentPartyVoting(self,img_main):
         gray = cv2.cvtColor(img_main, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
+
+        # ----------------------<Other functions>--------------------------------------
         # gray = cv2.fastNlMeansDenoising(gray,None,18,7,21)
         # thresh, gray = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY_INV)
+        # ----------------------</Other functions>-------------------------------------
+        
         gray_erode = cv2.erode(gray.copy(), np.ones((5, 5), np.uint8), iterations=1)
         cannyout = cv2.Canny(gray_erode, 50, 100, 5)
 

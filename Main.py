@@ -35,9 +35,6 @@ panelB = None
 
 prg_bar = ttk.Progressbar(bottomframe,orient=HORIZONTAL,length = 200,mode='indeterminate')
 prg_bar.grid(row=1,columnspan=2,padx=10,pady=10)
-# ballot_paper = cv2.imread('001A.jpg')
-# # P1 = cv2.imread('img/Party_1.jpg')
-# img_main = ballot_paper.copy()
 
 transform = ImageTransform.ImageTransform()
 segmentation = ImageSegmentaion.ImageSegmentation()
@@ -65,7 +62,7 @@ def select_image():
                     img = img_main
 
                     # Display the cropped image
-                    img_main = cv2.resize(img_main, (0, 0), fx=0.25, fy=0.25)
+                    # img_main = cv2.resize(img_main, (0, 0), fx=0.25, fy=0.25)
                     # cv2.imshow('Main', img_main)
 
                     # Display the edged image
@@ -128,34 +125,16 @@ def select_image():
                                 if cx < (j + 1) * width / 10 and cx > j * width / 10 and cy < (
                                     i + 1) * height / 4 and cy > i * height / 4:
                                     blocks[i * 10 + j] = [cx, cy]
-                                    # print(blocks[i])
-                    # print(blocks)
+
+
 
                     voted = [i + 1 for i, val in enumerate(blocks) if val is None]
                     print(voted)
                     # cv2.imshow('im', pref_im)
 
                     # -------------------</Preference Voting>--------------------------------------------------------------------
-                    # increment+=1
+
                     process_images(img,path,voted)
-
-    # prg_bar.stop()
-    # if panelA is not None:
-    #     panelA.grid_forget()
-    # if panelB is not None:
-    #     panelB.grid_forget()
-
-    # Open the file
-    # path = tkFileDialog.askopenfilename()
-    #
-    # if len(path) >0:
-    #     t1.delete(0,END)
-    #     t1.insert(0,path)
-    #
-    #     template_ori = cv2.imread(path,0)
-    #     img_0 = img.copy()
-    #
-    #     processing.startDetectPartyImage(img_0,template_ori)
 
 # -------------------------------------------------------------------------------------------------------------
 
@@ -189,15 +168,11 @@ def main_thread_start():
 def select_party_symbols(t2):
     global panelA,panelB,img
 
-    # if panelA is not None:
-    #     panelA.grid_forget()
-    # if panelB is not None:
-    #     panelB.grid_forget()
-
     # Open directory
     p = selct_signs()
     t2.delete(0, END)
     t2.insert(0, p)
+
     # Copy the main image
     # img_0 = img.copy()
 
@@ -209,7 +184,6 @@ def process_images(img,path,voted):
 
 def selct_signs():
     global path
-    parties_images_ = []
     path = tkFileDialog.askdirectory()
 
     if len(path) > 0:
@@ -219,8 +193,7 @@ def selct_signs():
                 if len(filepath) > 0:
                     # template_ori = cv2.imread(filepath, 0)
                     arr[str(file)] = [dict(),0]
-    print(path)
-    print(arr)
+
     return path
 
 def select_ballot_papers(t1):

@@ -6,10 +6,7 @@ class ImageTransform(object):
     def rotateImage(self,img_main,contour):
         # Rotate Image-------------------------------------------------------------------------
         approximation = cv2.approxPolyDP(contour, 0.02 * cv2.arcLength(contour, True), True)
-        # print(approximation)
 
-        # approximation = sort_corners(approximation)
-        # print(approximation)
         h1 = np.sqrt(np.power((approximation[0][0][0] - approximation[3][0][0]), 2) + np.power(
             (approximation[0][0][1] - approximation[3][0][1]), 2))
         h2 = np.sqrt(np.power((approximation[1][0][0] - approximation[2][0][0]), 2) + np.power(
@@ -23,7 +20,7 @@ class ImageTransform(object):
             (approximation[2][0][1] - approximation[3][0][1]), 2))
 
         w = (w1 + w2) / 2
-        # arr = [[i[0][0],i[0][1]] for i in approximation]
+
         arr = approximation
 
         arr = [[arr[1][0][0], arr[1][0][1]], [arr[0][0][0], arr[0][0][1]], [arr[3][0][0], arr[3][0][1]],
